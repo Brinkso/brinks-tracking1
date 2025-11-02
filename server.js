@@ -1,29 +1,160 @@
-Downloading cache...
-==> Cloning from https://github.com/Brinkso/brinks-tracking1
-==> Checking out commit 8a6eb7a3b252bb61c4f73700e8810f0aff7b32bf in branch main
-==> Transferred 54MB in 1s. Extraction took 2s.
-==> Requesting Node.js version >=18.0.0
-==> Using Node.js version 25.1.0 via /opt/render/project/src/package.json
-==> Docs on specifying a Node.js version: https://render.com/docs/node-version
-==> Running build command 'npm install'...
-up to date, audited 78 packages in 454ms
-14 packages are looking for funding
-  run `npm fund` for details
-found 0 vulnerabilities
-==> Uploading build...
-==> Uploaded in 3.5s. Compression took 0.9s
-==> Build successful 🎉
-==> Deploying...
-==> Running 'node server.js'
-Warning: connect.session() MemoryStore is not
-designed for a production environment, as it will leak
-memory, and will not scale past a single process.
-✅ Brinks Tracking Server running on port 10000
-==> Your service is live 🎉
-==> 
-==> ///////////////////////////////////////////////////////////
-==> 
-==> Available at your primary URL https://brinks-tracking1.onrender.com
-==> 
-==> ///////////////////////////////////////////////////////////
-Need better ways to work with logs? Try theRender CLI, Render MCP Server, or set up a log stream integration 
+// server.js
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const cors = require("cors");
+const session = require("express-session");
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static(__dirname));
+
+app.use(
+  session({
+    secret: "brinkssecurekey",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
+const DATA_FILE = path.join(__dirname, "shipments.json");
+
+// Utility functions
+function readShipments() {
+  if (!fs.existsSync(DATA_FILE)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE));
+  } catch (e) {
+    console.error("❌ Error reading shipments.json:", e);
+    return [];
+  }
+}
+
+function writeShipments(data) {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.error("❌ Error writing shipments.json:", e);
+  }
+}
+
+// ------- AUTH -------
+const ADMIN_USER = "0silver";
+const ADMIN_PASS = "Silverboss112277";
+
+app.post("/login", (req, res) => {
+  const { username, password } = req.body || {};
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    req.session.loggedIn = true;
+    req.session.user = username;
+    return res.json({ success: true });
+  }
+  res.status(401).json({ success: false, message: "Invalid username or password" });
+});
+
+app.post("/logout", (req, res) => {
+  req.session.destroy(() => res.json({ success: true }));
+});
+
+// Protect admin page
+app.use("/admin.html", (req, res, next) => {
+  if (!req.session || !req.session.loggedIn)
+    return res.redirect("/login.html");
+  next();
+});
+
+// ------- ADD SHIPMENT -------
+app.post("/add-shipment", (req, res) => {
+  if (!req.session || !req.session.loggedIn)
+    return res.status(403).json({ error: "Unauthorized" });
+
+  const { tracking, sender, receiver, status, securityLevel } = req.body || {};
+  if (!tracking || !sender || !receiver || !securityLevel) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const shipments = readShipments();
+
+  const now = new Date();
+  const formattedTime = now.toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  const newShipment = {
+    tracking,
+    sender,
+    receiver,
+    status: status || "In Secure Transit",
+    securityLevel,
+    lastUpdated: formattedTime,
+  };
+
+  shipments.push(newShipment);
+  writeShipments(shipments);
+
+  res.json({ success: true, shipment: newShipment });
+});
+
+// ------- UPDATE SHIPMENT STATUS -------
+app.post("/update-status", (req, res) => {
+  if (!req.session || !req.session.loggedIn)
+    return res.status(403).json({ error: "Unauthorized" });
+
+  const { tracking, status } = req.body || {};
+  if (!tracking || !status)
+    return res.json({ success: false, message: "Missing fields" });
+
+  const shipments = readShipments();
+  const shipment = shipments.find((s) => s.tracking === tracking);
+  if (!shipment)
+    return res.json({ success: false, message: "Shipment not found" });
+
+  const now = new Date();
+  const formattedTime = now.toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  shipment.status = status;
+  shipment.lastUpdated = formattedTime;
+
+  writeShipments(shipments);
+  res.json({ success: true });
+});
+
+// ------- TRACK SHIPMENT -------
+app.get("/track/:tn", (req, res) => {
+  const tn = (req.params.tn || "").trim();
+  const shipments = readShipments();
+  const shipment = shipments.find((s) => s.tracking === tn);
+  if (!shipment) return res.status(404).json({ error: "Shipment not found" });
+
+  const responseData = {
+    tracking: shipment.tracking || "N/A",
+    sender: shipment.sender || "N/A",
+    receiver: shipment.receiver || "N/A",
+    status: shipment.status || "Pending",
+    securityLevel: shipment.securityLevel || "Standard",
+    lastUpdated: shipment.lastUpdated || "Not updated yet",
+  };
+
+  res.json(responseData);
+});
+
+// ------- HEALTH CHECK FOR RENDER -------
+app.get("/ping", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
+});
+
+// ------- HOMEPAGE -------
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "tracking.html"));
+});
+
+// ------- START SERVER -------
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`✅ Brinks Tracking Server running on port ${PORT}`);
+});

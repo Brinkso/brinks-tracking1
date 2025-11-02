@@ -123,6 +123,10 @@ app.get("/track/:tn", (req, res) => {
 
   res.json(responseData);
 });
+// Serve homepage (tracking.html) by default
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "tracking.html"));
+});
 
 // ------- START SERVER -------
 const PORT = process.env.PORT || 4000;

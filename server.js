@@ -127,7 +127,11 @@ app.get("/track/:tn", (req, res) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "tracking.html"));
 });
-
+// ✅ Health check route for cron jobs or uptime monitoring
+app.get("/ping", (req, res) => {
+  res.set("Content-Type", "text/plain");
+  res.status(200).send("OK");
+});
 // ------- START SERVER -------
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

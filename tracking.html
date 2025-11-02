@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BRINKS Global Services — Secure Tracking</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="brinks-header">
+    <div class="brinks-logo">
+      <div class="brinks-lines">
+        <div></div><div></div><div></div>
+      </div>
+      <div class="brinks-text">
+        <h1>BRINKS</h1>
+        <p>Global Services</p>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="track-card">
+      <h2>Secure Shipment Tracking</h2>
+      <p>Enter your tracking number below to verify consignment status.</p>
+
+      <form id="trackingForm">
+        <input type="text" id="trackingId" placeholder="Enter Tracking ID" required />
+        <button type="submit">Track Shipment</button>
+      </form>
+
+      <div id="loading" class="hidden">
+        <div class="spinner"></div>
+        <p>Verifying your shipment...</p>
+      </div>
+
+      <div id="result"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 BRINKS Global Services. All rights reserved.</p>
+  </footer>
+  <footer class="brinks-footer">
+    <div class="footer-content">
+      <p>📍 Sweden | ☎ +49 700-BRINKS | ✉ support@brinkssecure.com</p>
+      <p>© 2025 BRINKS Global Services. All rights reserved.</p>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>

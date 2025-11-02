@@ -1,0 +1,341 @@
+/* style.css - Brinks clean theme */
+:root {
+  --blue: #003399;
+  --blue-dark: #002080;
+  --muted: #f5f7fa;
+  --card: #ffffff;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--muted);
+  color: #222;
+}
+
+/* Header */
+.brinks-header {
+  width: 100%;
+  background: var(--blue);
+  color: white;
+  padding: 12px 10px;
+}
+.brinks-header .header-inner { text-align:center; }
+.brinks-header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; }
+.brinks-header p { margin: 2px 0 0; font-size: 12px; opacity: 0.95; }
+
+/* Content layout */
+main { max-width: 540px; margin: 40px auto; padding: 0 16px; }
+
+/* Cards */
+.track-card, .admin-card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.track-card h2, .admin-card h2 { margin-top: 0; color: var(--blue); }
+
+/* Forms */
+form input[type="text"], form input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border: 1px solid #d6d9df;
+}
+form button {
+  width: 100%;
+  padding: 12px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+form button:hover { background: var(--blue-dark); }
+
+/* Result card */
+.result-card {
+  margin-top: 18px;
+  border-left: 4px solid var(--blue);
+  padding: 12px;
+  background: #fff;
+  border-radius: 6px;
+}
+.result-card h3 { margin: 0 0 8px 0; color: var(--blue); }
+
+.admin-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.btn-red { background:#cc0000; color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; }
+
+/* small screens */
+@media (max-width:520px){
+  main { margin: 20px 10px;}
+  .admin-top { flex-direction: column; align-items: stretch; }
+}
+/* --- Tracking Page Enhancements --- */
+.hidden { display: none; }
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--blue);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 12px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#loading {
+  text-align: center;
+  color: #555;
+  margin-top: 16px;
+}
+
+.error-msg {
+  color: #d00;
+  background: #ffe6e6;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.status {
+  font-weight: bold;
+  color: var(--blue);
+}
+footer {
+  text-align: center;
+  padding: 16px;
+  color: #777;
+  font-size: 13px;
+  margin-top: 40px;
+}
+/* --- Shield Logo Styles --- */
+.brinks-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.shield-logo {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 6px;
+}
+
+.brinks-text h1 {
+  font-size: 2em;
+  color: #0033a0;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.brinks-text p {
+  margin: 0;
+  color: #555;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+/* --- Brinks Header Redesign --- */
+.brinks-header {
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+.brinks-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brinks-lines {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.brinks-lines div {
+  width: 25px;
+  height: 4px;
+  background-color: #0033a0; /* Brinks Blue */
+  border-radius: 2px;
+}
+
+.brinks-text h1 {
+  font-size: 2.4em;
+  font-weight: 800;
+  color: #0033a0;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.brinks-text p {
+  margin: 3px 0 0;
+  color: #555;
+  font-weight: 500;
+  font-size: 0.95em;
+  letter-spacing: 0.5px;
+}
+/* --- Brinks Blue Header (White Logo) --- */
+.brinks-header {
+  text-align: center;
+  background-color: #0033a0; /* Brinks Blue */
+  padding: 40px 0;
+  margin-bottom: 25px;
+}
+
+.brinks-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brinks-lines {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.brinks-lines div {
+  width: 25px;
+  height: 4px;
+  background-color: white; /* White logo lines */
+  border-radius: 2px;
+}
+
+.brinks-text h1 {
+  font-size: 2.4em;
+  font-weight: 800;
+  color: white; /* White text */
+  letter-spacing: 1px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.brinks-text p {
+  margin: 3px 0 0;
+  color: #e0e0e0; /* Light gray for Global Services */
+  font-weight: 500;
+  font-size: 1em;
+  letter-spacing: 0.5px;
+}
+/* --- Progress Tracker --- */
+.progress-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px auto;
+  width: 100%;
+  max-width: 400px;
+}
+
+.progress-step {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  color: #ccc;
+  position: relative;
+}
+
+.progress-step.active {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.progress-step::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  background-color: #ccc;
+  z-index: -1;
+  transform: translateX(-50%);
+}
+
+.progress-step.active::before {
+  background-color: var(--blue);
+}
+
+/* --- Footer --- */
+.brinks-footer {
+  background-color: #0033a0;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  font-size: 0.9em;
+  margin-top: 40px;
+}
+
+.brinks-footer p {
+  margin: 5px 0;
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+    padding: 10px;
+  }
+  .track-card {
+    padding: 15px;
+    margin: 10px;
+  }
+  input, button {
+    width: 100%;
+    font-size: 1em;
+  }
+  .progress-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+.progress-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  position: relative;
+}
+
+.progress-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  font-size: 14px;
+  color: #999;
+}
+
+.progress-step::before {
+  content: "";
+  width: 100%;
+  height: 4px;
+  background-color: #ccc;
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: -1;
+}
+
+.progress-step.active {
+  color: #0056b3;
+  font-weight: bold;
+}
+
+.progress-step.active::before {
+  background-color: #007bff;
+}

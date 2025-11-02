@@ -153,8 +153,8 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "tracking.html"));
 });
 
-// ------- START SERVER -------
-const PORT = process.env.PORT || 4000;
+// ------- START SERVER -------ç
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Brinks Tracking Server running on port ${PORT}`);
 });

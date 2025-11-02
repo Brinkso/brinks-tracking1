@@ -1,29 +1,40 @@
-Downloading cache...
-==> Cloning from https://github.com/Brinkso/brinks-tracking1
-==> Checking out commit 8a6eb7a3b252bb61c4f73700e8810f0aff7b32bf in branch main
-==> Transferred 54MB in 1s. Extraction took 2s.
-==> Requesting Node.js version >=18.0.0
-==> Using Node.js version 25.1.0 via /opt/render/project/src/package.json
-==> Docs on specifying a Node.js version: https://render.com/docs/node-version
-==> Running build command 'npm install'...
-up to date, audited 78 packages in 454ms
-14 packages are looking for funding
-  run `npm fund` for details
-found 0 vulnerabilities
-==> Uploading build...
-==> Uploaded in 3.5s. Compression took 0.9s
-==> Build successful 🎉
-==> Deploying...
-==> Running 'node server.js'
-Warning: connect.session() MemoryStore is not
-designed for a production environment, as it will leak
-memory, and will not scale past a single process.
-✅ Brinks Tracking Server running on port 10000
-==> Your service is live 🎉
-==> 
-==> ///////////////////////////////////////////////////////////
-==> 
-==> Available at your primary URL https://brinks-tracking1.onrender.com
-==> 
-==> ///////////////////////////////////////////////////////////
-Need better ways to work with logs? Try theRender CLI, Render MCP Server, or set up a log stream integration 
+// script.js — clean working version
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("trackingForm");
+  const resultDiv = document.getElementById("result");
+  const loadingDiv = document.getElementById("loading");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const trackingId = document.getElementById("trackingId").value.trim();
+    if (!trackingId) return alert("Please enter a tracking number.");
+
+    resultDiv.innerHTML = "";
+    loadingDiv.classList.remove("hidden");
+
+    try {
+      const res = await fetch(`/track/${trackingId}`);
+      if (!res.ok) throw new Error("Shipment not found");
+
+      const data = await res.json();
+      loadingDiv.classList.add("hidden");
+
+      resultDiv.innerHTML = `
+        <div class="result-card">
+          <h3>Tracking Details</h3>
+          <p><strong>Tracking ID:</strong> ${data.tracking}</p>
+          <p><strong>Sender:</strong> ${data.sender}</p>
+          <p><strong>Receiver:</strong> ${data.receiver}</p>
+          <p><strong>Status:</strong> ${data.status}</p>
+          <p><strong>Security Level:</strong> ${data.securityLevel}</p>
+          <p><strong>Last Updated:</strong> ${data.lastUpdated}</p>
+        </div>
+      `;
+    } catch (err) {
+      loadingDiv.classList.add("hidden");
+      resultDiv.innerHTML = `<p class="error">❌ ${err.message}</p>`;
+    }
+  });
+});

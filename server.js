@@ -1,4 +1,3 @@
-// server.js
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -20,7 +19,7 @@ app.use(
 
 const DATA_FILE = path.join(__dirname, "shipments.json");
 
-// Utility functions
+// Read and write shipment data
 function readShipments() {
   if (!fs.existsSync(DATA_FILE)) return [];
   try {
@@ -39,10 +38,11 @@ function writeShipments(data) {
   }
 }
 
-// ------- AUTH -------
+// Admin credentials
 const ADMIN_USER = "0silver";
 const ADMIN_PASS = "Silverboss112277";
 
+// Login route
 app.post("/login", (req, res) => {
   const { username, password } = req.body || {};
   if (username === ADMIN_USER && password === ADMIN_PASS) {
@@ -53,6 +53,7 @@ app.post("/login", (req, res) => {
   res.status(401).json({ success: false, message: "Invalid username or password" });
 });
 
+// Logout route
 app.post("/logout", (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
@@ -64,7 +65,7 @@ app.use("/admin.html", (req, res, next) => {
   next();
 });
 
-// ------- ADD SHIPMENT -------
+// Add new shipment
 app.post("/add-shipment", (req, res) => {
   if (!req.session || !req.session.loggedIn)
     return res.status(403).json({ error: "Unauthorized" });
@@ -75,7 +76,6 @@ app.post("/add-shipment", (req, res) => {
   }
 
   const shipments = readShipments();
-
   const now = new Date();
   const formattedTime = now.toLocaleString("en-US", {
     dateStyle: "medium",
@@ -93,11 +93,10 @@ app.post("/add-shipment", (req, res) => {
 
   shipments.push(newShipment);
   writeShipments(shipments);
-
   res.json({ success: true, shipment: newShipment });
 });
 
-// ------- UPDATE SHIPMENT STATUS -------
+// Update shipment
 app.post("/update-status", (req, res) => {
   if (!req.session || !req.session.loggedIn)
     return res.status(403).json({ error: "Unauthorized" });
@@ -119,41 +118,38 @@ app.post("/update-status", (req, res) => {
 
   shipment.status = status;
   shipment.lastUpdated = formattedTime;
-
   writeShipments(shipments);
   res.json({ success: true });
 });
 
-// ------- TRACK SHIPMENT -------
+// Tracking route
 app.get("/track/:tn", (req, res) => {
   const tn = (req.params.tn || "").trim();
   const shipments = readShipments();
   const shipment = shipments.find((s) => s.tracking === tn);
   if (!shipment) return res.status(404).json({ error: "Shipment not found" });
 
-  const responseData = {
+  res.json({
     tracking: shipment.tracking || "N/A",
     sender: shipment.sender || "N/A",
     receiver: shipment.receiver || "N/A",
     status: shipment.status || "Pending",
     securityLevel: shipment.securityLevel || "Standard",
     lastUpdated: shipment.lastUpdated || "Not updated yet",
-  };
-
-  res.json(responseData);
+  });
 });
 
-// ------- HEALTH CHECK FOR RENDER -------
+// Health check (for Render)
 app.get("/ping", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
-// ------- HOMEPAGE -------
+// Default page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "tracking.html"));
 });
 
-// ------- START SERVER -------ç
+// Start server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Brinks Tracking Server running on port ${PORT}`);

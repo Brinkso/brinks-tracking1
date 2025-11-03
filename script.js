@@ -1,40 +1,39 @@
-// script.js — clean working version
-
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("trackingForm");
-  const resultDiv = document.getElementById("result");
-  const loadingDiv = document.getElementById("loading");
+  const trackingId = document.getElementById("trackingId");
+  const result = document.getElementById("result");
+  const loading = document.getElementById("loading");
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const id = trackingId.value.trim();
+    if (!id) return alert("Please enter a tracking number.");
 
-    const trackingId = document.getElementById("trackingId").value.trim();
-    if (!trackingId) return alert("Please enter a tracking number.");
-
-    resultDiv.innerHTML = "";
-    loadingDiv.classList.remove("hidden");
+    loading.classList.remove("hidden");
+    result.innerHTML = "";
 
     try {
-      const res = await fetch(`/track/${trackingId}`);
-      if (!res.ok) throw new Error("Shipment not found");
-
+      const res = await fetch(`/track/${id}`);
       const data = await res.json();
-      loadingDiv.classList.add("hidden");
 
-      resultDiv.innerHTML = `
-        <div class="result-card">
-          <h3>Tracking Details</h3>
-          <p><strong>Tracking ID:</strong> ${data.tracking}</p>
+      if (res.ok) {
+        result.innerHTML = `
+          <h3>Shipment Found</h3>
+          <p><strong>Tracking:</strong> ${data.tracking}</p>
           <p><strong>Sender:</strong> ${data.sender}</p>
           <p><strong>Receiver:</strong> ${data.receiver}</p>
           <p><strong>Status:</strong> ${data.status}</p>
           <p><strong>Security Level:</strong> ${data.securityLevel}</p>
           <p><strong>Last Updated:</strong> ${data.lastUpdated}</p>
-        </div>
-      `;
+        `;
+      } else {
+        result.innerHTML = `<p class="error">❌ ${data.error || "Shipment not found"}</p>`;
+      }
     } catch (err) {
-      loadingDiv.classList.add("hidden");
-      resultDiv.innerHTML = `<p class="error">❌ ${err.message}</p>`;
+      console.error(err);
+      result.innerHTML = `<p class="error">⚠️ Error connecting to server.</p>`;
+    } finally {
+      loading.classList.add("hidden");
     }
   });
 });

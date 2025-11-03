@@ -124,6 +124,10 @@ app.get("/track/:tn", (req, res) => {
   res.json(responseData);
 });
 // Serve homepage (tracking.html) by default
+// ------- HEALTH CHECK FOR RENDER -------
+app.get("/ping", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
+});
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "tracking.html"));
 });

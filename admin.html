@@ -3,53 +3,98 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin — BRINKS Global Services</title>
+  <title>Admin — BRINKS</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h2>BRINKS Admin Portal</h2>
-  <form id="shipmentForm">
-    <input type="text" id="tracking" placeholder="Tracking ID" required />
-    <input type="text" id="sender" placeholder="Sender" required />
-    <input type="text" id="receiver" placeholder="Receiver" required />
-    <input type="text" id="securityLevel" placeholder="Security Level" required />
-    <button type="submit">Add Shipment</button>
-  </form>
+  <header class="brinks-header">
+    <div class="header-inner">
+      <h1>BRINKS</h1>
+      <p>Global Services — Admin</p>
+    </div>
+  </header>
 
-  <h3>Update Status</h3>
-  <form id="statusForm">
-    <input type="text" id="trackId" placeholder="Tracking ID" required />
-    <input type="text" id="newStatus" placeholder="New Status" required />
-    <button type="submit">Update</button>
-  </form>
+  <main>
+    <section class="admin-card">
+      <div class="admin-top">
+        <h2>Add Shipment</h2>
+        <button id="logoutBtn" class="btn-red">Logout</button>
+      </div>
+
+      <form id="adminForm">
+        <input type="text" id="tracking" placeholder="Tracking ID" required />
+        <input type="text" id="sender" placeholder="Sender" required />
+        <input type="text" id="receiver" placeholder="Receiver" required />
+        <input type="text" id="status" placeholder="Status (optional)" />
+        <input type="text" id="security" placeholder="Security Level" required />
+        <button type="submit">Add</button>
+      </form>
+
+      <div id="adminResult"></div>
+
+      <hr>
+
+      <h3>Update Shipment Status</h3>
+      <form id="updateForm">
+        <input type="text" id="updateTracking" placeholder="Tracking Number" required />
+        <input type="text" id="newStatus" placeholder="New Status" required />
+        <button type="submit">Update Status</button>
+      </form>
+    </section>
+  </main>
 
   <script>
-    const addForm = document.getElementById("shipmentForm");
-    const statusForm = document.getElementById("statusForm");
+  // Logout button
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await fetch("/logout", { method: "POST" });
+    window.location.href = "/login.html";
+  });
 
-    addForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(addForm).entries());
-      const res = await fetch("/add-shipment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const result = await res.json();
-      alert(result.success ? "Shipment added ✅" : "Error adding shipment ❌");
+  // Add shipment
+  document.getElementById("adminForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const body = {
+      tracking: document.getElementById("tracking").value.trim(),
+      sender: document.getElementById("sender").value.trim(),
+      receiver: document.getElementById("receiver").value.trim(),
+      status: document.getElementById("status").value.trim(),
+      securityLevel: document.getElementById("security").value.trim()
+    };
+    const res = await fetch("/add-shipment", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body)
     });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("adminResult").innerHTML = "<p style='color:green'>Shipment added.</p>";
+      // clear fields
+      document.getElementById("adminForm").reset();
+    } else {
+      document.getElementById("adminResult").innerHTML = "<p style='color:red'>Error: " + (data.error||data.message||"Failed") + "</p>";
+    }
+  });
 
-    statusForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(statusForm).entries());
-      const res = await fetch("/update-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const result = await res.json();
-      alert(result.success ? "Status updated ✅" : "Error updating status ❌");
+  // Update status
+  document.getElementById("updateForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      tracking: document.getElementById("updateTracking").value.trim(),
+      status: document.getElementById("newStatus").value.trim()
+    };
+    const res = await fetch("/update-status", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
     });
+    const data = await res.json();
+    if (data.success) {
+      alert("Status updated successfully!");
+      document.getElementById("updateForm").reset();
+    } else {
+      alert("Error: " + (data.message || "Failed"));
+    }
+  });
   </script>
 </body>
 </html>

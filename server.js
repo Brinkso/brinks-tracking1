@@ -1,35 +1,48 @@
 // server.js
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const session = require("express-session");
+const { Pool } = require("pg"); // PostgreSQL
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-app.use(session({
-  secret: "brinkssecurekey",
-  resave: false,
-  saveUninitialized: true
-}));
+app.use(
+  session({
+    secret: "brinkssecurekey",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 
-const DATA_FILE = path.join(__dirname, "shipments.json");
+// ------- DATABASE SETUP -------
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
-// Utility functions
-function readShipments() {
-  if (!fs.existsSync(DATA_FILE)) return [];
+// Create shipments table if not exists
+(async () => {
   try {
-    return JSON.parse(fs.readFileSync(DATA_FILE));
-  } catch (e) {
-    return [];
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS shipments (
+        id SERIAL PRIMARY KEY,
+        tracking TEXT UNIQUE NOT NULL,
+        sender TEXT,
+        receiver TEXT,
+        status TEXT,
+        security_level TEXT,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("✅ Database ready: shipments table confirmed.");
+  } catch (err) {
+    console.error("❌ Database initialization error:", err);
   }
-}
-function writeShipments(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
+})();
 
 // ------- AUTH -------
 const ADMIN_USER = "0silver";
@@ -51,83 +64,104 @@ app.post("/logout", (req, res) => {
 
 // Protect admin page
 app.use("/admin.html", (req, res, next) => {
-  if (!req.session || !req.session.loggedIn) return res.redirect("/login.html");
+  if (!req.session || !req.session.loggedIn)
+    return res.redirect("/login.html");
   next();
 });
 
+// ------- DATABASE HELPERS -------
+async function addShipment({ tracking, sender, receiver, status, securityLevel }) {
+  await pool.query(
+    `INSERT INTO shipments (tracking, sender, receiver, status, security_level)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (tracking) DO UPDATE SET
+       sender = EXCLUDED.sender,
+       receiver = EXCLUDED.receiver,
+       status = EXCLUDED.status,
+       security_level = EXCLUDED.security_level,
+       last_updated = CURRENT_TIMESTAMP`,
+    [tracking, sender, receiver, status, securityLevel]
+  );
+}
+
+async function getShipment(tracking) {
+  const result = await pool.query("SELECT * FROM shipments WHERE tracking = $1", [tracking]);
+  return result.rows[0];
+}
+
+async function updateShipmentStatus(tracking, status) {
+  await pool.query(
+    `UPDATE shipments SET status=$2, last_updated=CURRENT_TIMESTAMP WHERE tracking=$1`,
+    [tracking, status]
+  );
+}
+
 // ------- ADD SHIPMENT -------
-app.post("/add-shipment", (req, res) => {
-  if (!req.session || !req.session.loggedIn) return res.status(403).json({ error: "Unauthorized" });
+app.post("/add-shipment", async (req, res) => {
+  if (!req.session || !req.session.loggedIn)
+    return res.status(403).json({ error: "Unauthorized" });
 
   const { tracking, sender, receiver, status, securityLevel } = req.body || {};
   if (!tracking || !sender || !receiver || !securityLevel) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const shipments = readShipments();
-
-  const now = new Date();
-  const formattedTime = now.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
-
-  const newShipment = {
-    tracking,
-    sender,
-    receiver,
-    status: status || "In Secure Transit",
-    securityLevel,
-    lastUpdated: formattedTime
-  };
-
-  shipments.push(newShipment);
-  writeShipments(shipments);
-
-  res.json({ success: true, shipment: newShipment });
+  try {
+    await addShipment({ tracking, sender, receiver, status, securityLevel });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error adding shipment:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ------- UPDATE SHIPMENT STATUS -------
-app.post("/update-status", (req, res) => {
-  if (!req.session || !req.session.loggedIn) return res.status(403).json({ error: "Unauthorized" });
+app.post("/update-status", async (req, res) => {
+  if (!req.session || !req.session.loggedIn)
+    return res.status(403).json({ error: "Unauthorized" });
 
   const { tracking, status } = req.body || {};
-  if (!tracking || !status) return res.json({ success: false, message: "Missing fields" });
+  if (!tracking || !status)
+    return res.json({ success: false, message: "Missing fields" });
 
-  const shipments = readShipments();
-  const shipment = shipments.find(s => s.tracking === tracking);
-  if (!shipment) return res.json({ success: false, message: "Shipment not found" });
-
-  const now = new Date();
-  const formattedTime = now.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
-
-  shipment.status = status;
-  shipment.lastUpdated = formattedTime;
-
-  writeShipments(shipments);
-  res.json({ success: true });
+  try {
+    await updateShipmentStatus(tracking, status);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error updating shipment:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ------- TRACK SHIPMENT -------
-app.get("/track/:tn", (req, res) => {
+app.get("/track/:tn", async (req, res) => {
   const tn = (req.params.tn || "").trim();
-  const shipments = readShipments();
-  const shipment = shipments.find(s => s.tracking === tn);
-  if (!shipment) return res.status(404).json({ error: "Shipment not found" });
+  try {
+    const shipment = await getShipment(tn);
+    if (!shipment) return res.status(404).json({ error: "Shipment not found" });
 
-  const responseData = {
-    tracking: shipment.tracking || "N/A",
-    sender: shipment.sender || "N/A",
-    receiver: shipment.receiver || "N/A",
-    status: shipment.status || "Pending",
-    securityLevel: shipment.securityLevel || "Standard",
-    lastUpdated: shipment.lastUpdated || shipment.updatedAt || "Not updated yet"
-  };
+    const responseData = {
+      tracking: shipment.tracking,
+      sender: shipment.sender,
+      receiver: shipment.receiver,
+      status: shipment.status,
+      securityLevel: shipment.security_level,
+      lastUpdated: shipment.last_updated,
+    };
 
-  res.json(responseData);
+    res.json(responseData);
+  } catch (err) {
+    console.error("❌ Error fetching shipment:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
-// Serve homepage (tracking.html) by default
-// ------- HEALTH CHECK FOR RENDER -------
+
+// ------- HEALTH CHECK -------
 app.get("/ping", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
+
+// ------- HOMEPAGE -------
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "tracking.html"));
 });

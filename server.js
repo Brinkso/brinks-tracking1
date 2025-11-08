@@ -155,12 +155,9 @@ app.get("/track/:tn", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
-// ------- HEALTH CHECK (keep this small and fast) -------
+// ------- HEALTH CHECK (simple for cron) -------
 app.get("/ping", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    time: new Date().toISOString(),
-  });
+  res.status(200).send("OK");
 });
 
 // ------- HEALTH CHECK -------
